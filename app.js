@@ -85,8 +85,8 @@ async function doPack(tok,name){
  else say('✓ Đã chuyển '+ok+' hình. Bấm "Tải zip về máy" để lưu.','var(--green)');}
 $('go').onclick=async()=>{const tok=ls.get('tg_token')||$('tok').value.replace(/\s+/g,'');if(!tok){say('Hãy dán token bot trước','var(--red)');return;}ls.set('tg_token',tok);showTok();
  const names=$('links').value.split(/\n+/).map(setName).filter(Boolean);if(!names.length){say('Hãy dán link dạng https://t.me/addstickers/TenBo','var(--red)');return;}
- $('go').disabled=true;try{if(!gifenc)gifenc=await import('./gifenc.esm.js');
-  for(const n of names)await doPack(tok,n);}catch(e){say('✕ '+(e.message||e),'var(--red)');}finally{$('go').disabled=false;}};
+ $('go').disabled=true;let wl=null;try{wl=await navigator.wakeLock.request('screen');}catch(e){}say('Đang làm… giữ app mở (màn hình sẽ không tự tắt).');try{if(!gifenc)gifenc=await import('./gifenc.esm.js');
+  for(const n of names)await doPack(tok,n);}catch(e){say('✕ '+(e.message||e),'var(--red)');}finally{$('go').disabled=false;try{wl&&wl.release();}catch(e){}}};
 $('dl').onclick=async()=>{if(!lastZipParts)return;const z=new JSZip();lastZipParts.items.forEach(it=>z.file(it.name,it.data));const b=await z.generateAsync({type:'blob'});
  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=lastName+'.zip';a.click();};
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
