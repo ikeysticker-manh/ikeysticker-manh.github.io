@@ -30,7 +30,7 @@ button.ghost{background:var(--bg);color:var(--blue)}button:disabled{opacity:.45}
 label.chk{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}
 canvas{display:none}
 </style></head><body><div class="wrap">
-<h1>iKeyVN <small>Sticker · v3</small></h1>
+<h1>iKeyVN <small>Sticker · v4</small></h1>
 <p class="lead">Tải bộ sticker Telegram, chuyển sẵn mọi định dạng (WebP động nét, GIF trong suốt, GIF nền trắng/đen cho Telegram) rồi đưa lên kho chung trên Drive – trong app chỉ cần bấm Tải là gửi được ngay.</p>
 
 <div class="card">
@@ -73,7 +73,10 @@ const say=(t,c)=>{$('msg').textContent=t;$('msg').style.color=c||'';};
 const prog=f=>$('prog').style.width=Math.round(f*100)+'%';
 function setName(l){l=(l||'').trim();let m=l.match(/(?:addstickers\/|set=)([A-Za-z0-9_]{1,64})/);if(m)return m[1];return /^[A-Za-z0-9_]{1,64}$/.test(l)?l:'';}
 async function tg(tok,method,q){const r=await fetch('https://api.telegram.org/bot'+tok+'/'+method+'?'+new URLSearchParams(q));const j=await r.json();if(!j.ok)throw new Error(j.description||'Telegram từ chối');return j.result;}
-async function tgFile(tok,id){const f=await tg(tok,'getFile',{file_id:id});if(!/^[A-Za-z0-9_\-]{1,40}\/[A-Za-z0-9_.\-]{1,80}$/.test(f.file_path))throw new Error('đường dẫn lạ: '+String(f.file_path).slice(0,60));const r=await fetch('https://api.telegram.org/file/bot'+tok+'/'+f.file_path);if(!r.ok)throw new Error('tải tệp lỗi '+r.status);return new Uint8Array(await r.arrayBuffer());}
+async function tgFile(tok,id){const f=await tg(tok,'getFile',{file_id:id});if(!/^[A-Za-z0-9_\-]{1,40}\/[A-Za-z0-9_.\-]{1,80}$/.test(f.file_path))throw new Error('đường dẫn lạ: '+String(f.file_path).slice(0,60));try{const r=await fetch('https://api.telegram.org/file/bot'+tok+'/'+f.file_path);if(r.ok)return new Uint8Array(await r.arrayBuffer());}catch(e){}
+ // máy chủ tệp của Telegram không cho trình duyệt tải thẳng (CORS) -> nhờ máy chủ Apps Script tải hộ
+ const r=await fetch(SERVER,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'tgfile',bot:tok,path:f.file_path})});
+ const j=await r.json();if(j.error)throw new Error(j.error);const bin=atob(j.data);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
 // ---- WebP động: ghép các khung WebP tĩnh ----
 function le(n,b){const a=[];for(let i=0;i<b;i++)a.push((n>>(8*i))&255);return a;}
 function chunk(id,d){const a=[...id].map(c=>c.charCodeAt(0)).concat(le(d.length,4),Array.from(d));if(d.length&1)a.push(0);return a;}
